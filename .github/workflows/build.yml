@@ -1,0 +1,33 @@
+name: Build iOS IPA
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: Mac 서버에서 Xcode로 빌드하기 (인증서 패스)
+        run: |
+          xcodebuild clean build \
+            -project TeslaApp.xcodeproj \
+            -scheme TeslaApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath derived_data \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: 가짜 IPA 파일로 압축하기
+        run: |
+          mkdir -p Payload
+          mv derived_data/Build/Products/Release-iphoneos/TeslaApp.app Payload/
+          zip -r TeslaApp.ipa Payload
+
+      - name: 완성된 IPA 다운로드 링크 만들기
+        uses: actions/upload-artifact@v4
+        with:
+          name: TeslaApp-IPA
+          path: TeslaApp.ipa
